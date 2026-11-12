@@ -6,8 +6,8 @@ python-multipart==0.0.33
 python-docx==1.2.0
 numpy==2.5.4
 pywhispercpp==1.5.1
+piper-tts==1.8.0
 
 # Tests
 pytest==9.2.0
 
-# Optional neural voices (offline): pip install piper-tts

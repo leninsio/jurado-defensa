@@ -1,5 +1,7 @@
 # Simulador de jurado — defensa TEG CUAM
 
+> 🇪🇸 **¿Eres estudiante?** Lee la guía en español: [README.es.md](README.es.md).
+
 Local voice app to rehearse the CUAM thesis defense: present slide by slide in
 practice mode or in one continuous "defensa real" recording, answer three AI
 judges shown as generated avatars seated at a jury table, get per-slide and
