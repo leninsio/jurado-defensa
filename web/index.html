@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulador de jurado · Defensa TEG</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>Simulador de jurado</h1>
+      <p>Defensa TEG · CUAM</p>
+    </div>
+    <div class="session-bar">
+      <span id="session-status" class="status-pill">Cargando…</span>
+      <button id="btn-new-session" class="ghost" type="button">Nueva práctica</button>
+    </div>
+  </header>
+
+  <div id="error-banner" class="error-banner" role="alert" hidden></div>
+
+  <nav class="tabs" role="tablist" aria-label="Modos de práctica">
+    <button class="tab-button active" data-tab="exposition" type="button" role="tab" aria-controls="tab-exposition" aria-selected="true">1 · Exposición</button>
+    <button class="tab-button" data-tab="practice" type="button" role="tab" aria-controls="tab-practice" aria-selected="false">Lámina a lámina</button>
+    <button class="tab-button" data-tab="jury" type="button" role="tab" aria-controls="tab-jury" aria-selected="false">2 · Jurado</button>
+    <button class="tab-button" data-tab="feedback" type="button" role="tab" aria-controls="tab-feedback" aria-selected="false">3 · Retroalimentación</button>
+    <button class="tab-button" data-tab="tutor" type="button" role="tab" aria-controls="tab-tutor" aria-selected="false">4 · Tutor</button>
+    <button id="btn-nav-direct" class="tab-button direct-entry" type="button">Jurado directo</button>
+  </nav>
+
+  <main>
+    <section id="tab-exposition" class="tab-panel" role="tabpanel">
+      <div class="expo-toolbar">
+        <label class="field">Modo
+          <select id="expo-mode">
+            <option value="practice" selected>Modo práctica (por lámina)</option>
+            <option value="real">Defensa real (una grabación)</option>
+          </select>
+        </label>
+        <button id="btn-start" class="primary" type="button">Comenzar</button>
+        <button id="btn-rerecord" class="ghost" type="button" disabled>Regrabar lámina</button>
+        <button id="btn-prev" class="ghost" type="button" disabled hidden>Lámina anterior</button>
+        <button id="btn-next" class="ghost" type="button" disabled>Siguiente lámina</button>
+        <button id="btn-finish" class="danger" type="button" disabled>Terminar</button>
+        <button id="btn-jury-direct" class="ghost" type="button" disabled>Jurado directo</button>
+        <span id="timer-label" class="timer-label">Lámina</span>
+        <span id="timer" class="timer" aria-live="off">00:00</span>
+        <span id="rec-indicator" class="rec-indicator" hidden>● Grabando</span>
+      </div>
+
+      <p class="hint">
+        <strong>Modo práctica:</strong> una grabación por lámina.
+        <strong>Defensa real:</strong> el presidente del jurado te da la palabra y
+        se graba toda la defensa de una vez; cambia de lámina con ←, →, PageUp o
+        PageDown sin detener la grabación.
+        <span class="keyboard-hint">← → para cambiar de lámina</span>
+      </p>
+
+      <div id="opening-panel" class="panel" hidden>
+        <h2>Apertura del jurado</h2>
+        <p id="opening-text"></p>
+        <button id="btn-play-opening" class="ghost" type="button">▶ Escuchar apertura</button>
+      </div>
+
+      <div class="slide-stage">
+        <img id="slide-image" alt="Lámina actual" hidden>
+        <p id="slide-empty" class="empty">Crea una práctica para comenzar.</p>
+        <span id="slide-counter" class="slide-counter"></span>
+      </div>
+
+      <div class="panel">
+        <h2>Transcripción por lámina</h2>
+        <ul id="slide-status-list" class="slide-status-list"></ul>
+        <p class="hint">La transcripción llega en segundo plano; puedes seguir exponiendo.</p>
+      </div>
+
+      <div id="expo-summary" class="panel" hidden>
+        <h2>Exposición terminada</h2>
+        <p id="expo-summary-text"></p>
+        <button id="btn-go-jury" class="primary" type="button">Ir al jurado</button>
+      </div>
+    </section>
+
+    <section id="tab-practice" class="tab-panel" role="tabpanel" hidden>
+      <div class="expo-toolbar">
+        <button id="btn-practice-prev" class="ghost" type="button" aria-label="Lámina anterior">◀</button>
+        <label class="field">Lámina
+          <select id="practice-slide-select"></select>
+        </label>
+        <button id="btn-practice-next" class="ghost" type="button" aria-label="Lámina siguiente">▶</button>
+        <button id="btn-practice-record" class="primary" type="button">● Grabar esta lámina</button>
+        <span id="practice-timer" class="timer" aria-live="off">00:00</span>
+        <span id="practice-rec" class="rec-indicator" hidden>● Grabando</span>
+        <label class="checkbox"><input id="practice-speak" type="checkbox" checked> Escuchar al tutor</label>
+      </div>
+
+      <p class="hint">
+        Elige una lámina, pulsa <strong>Grabar</strong>, explícala como en la defensa y pulsa
+        <strong>Terminar</strong>. El tutor mira la lámina, compara lo que dijiste con la tesis y te
+        dice qué dijiste bien y qué dijiste mal. Repítela las veces que quieras.
+        <span class="keyboard-hint">← → para cambiar de lámina</span>
+      </p>
+
+      <div class="practice-layout">
+        <div class="slide-stage">
+          <img id="practice-slide-image" alt="Lámina para practicar" hidden>
+          <p id="practice-slide-empty" class="empty">Crea una práctica para comenzar.</p>
+        </div>
+
+        <div class="panel practice-panel">
+          <h2>Retroalimentación del tutor</h2>
+          <p id="practice-status" class="hint" aria-live="polite">Graba la lámina para recibir la retroalimentación.</p>
+          <div id="practice-feedback" class="practice-feedback"></div>
+          <div class="toolbar">
+            <button id="btn-practice-replay" class="ghost" type="button" hidden>▶ Escuchar de nuevo</button>
+            <button id="btn-practice-ask-tutor" class="ghost" type="button">Preguntar al tutor sobre esta lámina</button>
+          </div>
+          <p id="practice-history" class="practice-history" hidden></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-jury" class="tab-panel" role="tabpanel" hidden>
+      <div id="jury-setup" class="panel">
+        <h2>Jurado</h2>
+        <p id="jury-hint" class="hint">Termina la exposición para que el jurado te haga las preguntas.</p>
+        <div class="toolbar">
+          <label class="field">Preguntas principales por juez
+            <select id="jury-questions">
+              <option value="1">1 (3 en total)</option>
+              <option value="2" selected>2 (6 en total)</option>
+            </select>
+          </label>
+          <button id="btn-jury-start" class="primary" type="button" disabled>Iniciar jurado</button>
+          <button id="btn-jury-direct-start" class="ghost" type="button" disabled>Jurado directo (sin exposición)</button>
+        </div>
+        <p class="hint">El jurado decide el orden: cada juez pregunta cuando le toca y otro puede intervenir sobre tu respuesta.</p>
+        <p class="hint"><strong>Jurado directo:</strong> si no quieres exponer, entra directo a las preguntas y recibe al final la misma calificación (sin nota de exposición).</p>
+        <fieldset id="jury-chapter-field" class="jury-chapters" hidden>
+          <legend>Capítulos para las preguntas</legend>
+          <label class="checkbox"><input type="checkbox" id="jury-chapter-all" checked> Todos los capítulos</label>
+          <div id="jury-chapter-options" class="chapter-options"></div>
+          <p class="hint">Elige uno o varios capítulos y los jueces preguntarán solo sobre ese contenido.</p>
+        </fieldset>
+      </div>
+
+      <p id="jury-scope" class="jury-scope" aria-live="polite"></p>
+
+      <div id="jury-stage" class="jury-stage" aria-label="Mesa del jurado"></div>
+
+      <div id="jury-deliberating" class="deliberating-banner" role="status" hidden>
+        <span class="deliberating-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span>El jurado está deliberando…</span>
+      </div>
+
+      <div id="judges-list" class="judges"></div>
+
+      <div id="jury-question-panel" class="panel" hidden>
+        <div class="question-head">
+          <span id="jury-current-judge" class="badge"></span>
+          <button id="btn-play-question" class="ghost" type="button">▶ Escuchar pregunta</button>
+        </div>
+        <p id="jury-question" class="question-text"></p>
+        <button id="btn-jury-ptt" class="ptt wide" type="button">Mantén presionado para responder (o Espacio)</button>
+        <div class="answer-row">
+          <input id="jury-answer-text" type="text" placeholder="…o escribe tu respuesta" autocomplete="off">
+          <button id="btn-jury-answer" class="ghost" type="button">Enviar respuesta</button>
+        </div>
+        <p class="hint">Suelta el botón para enviar la respuesta hablada, o escríbela y pulsa Enter.</p>
+      </div>
+
+      <div id="jury-done" class="panel verdict-panel" hidden>
+        <h2>Veredicto del jurado</h2>
+        <p id="jury-final-scope" class="jury-scope" hidden></p>
+        <p id="jury-final-grade" class="final-grade"></p>
+        <p id="jury-final-result" class="final-result"></p>
+        <p id="jury-final-closing" class="closing"></p>
+        <button id="btn-play-closing" class="ghost" type="button" hidden>▶ Escuchar cierre</button>
+        <a id="jury-verdict-export" class="button ghost" href="/api/jury/verdict/markdown" download hidden>Descargar veredicto (Markdown)</a>
+        <h3>Evaluación por juez</h3>
+        <div id="jury-final-verdicts" class="verdicts"></div>
+        <h3>Preguntas y respuestas</h3>
+        <div id="jury-final-questions" class="verdict-questions"></div>
+      </div>
+    </section>
+
+    <section id="tab-feedback" class="tab-panel" role="tabpanel" hidden>
+      <div class="panel">
+        <h2>Retroalimentación por lámina</h2>
+        <p class="hint">El evaluador revisa el texto de cada lámina y lo que expusiste en ella.</p>
+        <div class="toolbar">
+          <button id="btn-feedback" class="primary" type="button">Generar retroalimentación</button>
+          <button id="btn-global" class="ghost" type="button">Generar informe global</button>
+          <a id="feedback-export" class="button ghost" href="/api/feedback/markdown" download hidden>Exportar Markdown</a>
+        </div>
+        <p id="feedback-progress" class="hint" hidden></p>
+      </div>
+      <div id="progress-card" class="panel progress-card" hidden></div>
+      <div id="feedback-global"></div>
+      <div id="feedback-report" class="feedback-report"></div>
+    </section>
+
+    <section id="tab-tutor" class="tab-panel" role="tabpanel" hidden>
+      <div class="panel tutor-panel">
+        <h2>Tutor</h2>
+        <div id="tutor-character" class="tutor-character"></div>
+        <p class="hint">Pregunta por texto o mantén presionado el botón para hablar.</p>
+        <div id="tutor-messages" class="chat" aria-live="polite"></div>
+        <div class="tutor-attach-bar">
+          <label class="field">Mostrar lámina
+            <select id="tutor-slide-select"><option value="">Ninguna</option></select>
+          </label>
+          <button id="btn-tutor-attach" class="ghost" type="button">📎 Adjuntar imagen</button>
+          <input id="tutor-attach-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden>
+          <span class="hint">o pega una imagen con ⌘V en el cuadro de texto</span>
+        </div>
+        <div id="tutor-attachments" class="tutor-attachments" hidden></div>
+        <div class="chat-input">
+          <input id="tutor-input" type="text" placeholder="Escribe tu duda…" autocomplete="off">
+          <button id="btn-tutor-send" class="primary" type="button">Enviar</button>
+        </div>
+        <div class="toolbar">
+          <button id="btn-tutor-ptt" class="ptt" type="button">Mantén presionado para hablar (o Espacio)</button>
+          <label class="checkbox"><input id="tutor-speak" type="checkbox"> Escuchar respuestas</label>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="thinking" class="thinking" role="status" hidden>pensando…</div>
+  <script src="/static/characters.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+# Core app
+fastapi==0.162.0
+uvicorn==0.54.0
+httpx==0.28.1
+python-multipart==0.0.33
+python-docx==1.2.0
+numpy==2.5.4
+pywhispercpp==1.5.1
+
+# Tests
+pytest==9.2.0
+
+# Optional neural voices (offline): pip install piper-tts
